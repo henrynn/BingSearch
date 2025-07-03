@@ -1,6 +1,6 @@
 # AddCustomDomain.py
 
-This script is used to batch add custom allowed/blocked domains to an Azure Bing Search account.
+This script is used to batch add custom allowed/blocked domains to an Azure Grounding with Bing Custom Search account.
 
 ## Overview
 
