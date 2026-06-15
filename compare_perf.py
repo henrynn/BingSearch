@@ -319,6 +319,116 @@ def write_js_data(output: Dict[str, Any], js_path: str) -> None:
         f.write(f"window.COMPARE_REPORT = {payload};\n")
 
 
+def write_md_report(output: Dict[str, Any], md_path: str) -> None:
+    cfg = output.get("config", {})
+    results = output.get("results", [])
+    import datetime
+
+    lines: List[str] = []
+    lines.append("# Bing Search Performance Comparison Report")
+    lines.append("")
+    lines.append("> Web grounding built for the AI era — quality, speed, and token efficiency at frontier scale")
+    lines.append("")
+
+    lines.append("## Background")
+    lines.append("")
+    lines.append(
+        "This benchmark compares three Bing-backed search approaches under the same query and load settings. "
+        "The goal is to understand the relative performance and behavior of a direct search API path versus "
+        "two Foundry agent-based search integrations."
+    )
+    lines.append("")
+    lines.append(
+        "**Web IQ** is Microsoft\u2019s state-of-the-art grounding service for AI agents and assistants. "
+        "It returns ranked, citation-ready context across web, news, images, video, and more, and it\u2019s "
+        "built on Bing search infrastructure and re-architected for an era of LLMs and multi-step agents."
+    )
+    lines.append("")
+
+    lines.append("## Key Differences")
+    lines.append("")
+    lines.append("| # | Strategy | Description |")
+    lines.append("|---|----------|-------------|")
+    lines.append(
+        "| 1 | **Web IQ** | "
+        "Microsoft\u2019s state-of-the-art grounding service. Returns ranked, citation-ready context across "
+        "web, news, images, video, and more. Built on Bing search infrastructure and re-architected for LLMs "
+        "and multi-step agents. |"
+    )
+    lines.append(
+        "| 2 | **Foundry Grounding+Bing** | "
+        "Foundry agent with the Bing grounding tool. Adds agent orchestration and tool invocation on top of "
+        "search, making it flexible for agent workflows. |"
+    )
+    lines.append(
+        "| 3 | **Foundry Web Search Tool** | "
+        "Foundry agent using the web search abstraction. Represents the more general web-search integration "
+        "path in Foundry. |"
+    )
+    lines.append("")
+
+    lines.append("## Test Configuration")
+    lines.append("")
+    lines.append(f"- **Date**: {datetime.date.today()}")
+    lines.append(f"- **Query**: `{cfg.get('query', '')}` ")
+    lines.append(f"- **Requests per strategy**: {cfg.get('requests')}")
+    lines.append(f"- **Concurrency**: {cfg.get('concurrency')}")
+    lines.append(f"- **Timeout**: {cfg.get('timeout_s')}s")
+    lines.append(f"- **Warmup requests**: {cfg.get('warmup_requests', 0)}")
+    lines.append("")
+
+    lines.append("## Results")
+    lines.append("")
+    lines.append("### Overall Metrics")
+    lines.append("")
+    lines.append("| Strategy | Success Rate | Throughput (req/s) | Avg (ms) | P50 (ms) | P95 (ms) | P99 (ms) | Max (ms) |")
+    lines.append("|----------|:-----------:|:-----------------:|--------:|--------:|--------:|--------:|--------:|")
+    for r in results:
+        label = _strategy_label(r.get("strategy", "unknown"))
+        if "error" in r:
+            lines.append(f"| {label} | \u2717 | — | — | — | — | — | ERROR: {r['error']} |")
+        else:
+            s = r.get("summary", {})
+            lat = r.get("latency_ms", {})
+            lines.append(
+                f"| {label} "
+                f"| {s.get('success_rate', 0)}% "
+                f"| {s.get('throughput_rps', 0)} "
+                f"| {lat.get('avg', 0)} "
+                f"| {lat.get('p50', 0)} "
+                f"| {lat.get('p95', 0)} "
+                f"| {lat.get('p99', 0)} "
+                f"| {lat.get('max', 0)} |"
+            )
+    lines.append("")
+
+    lines.append("### Tool Latency (proxy)")
+    lines.append("")
+    lines.append(
+        "> For Foundry strategies, Tool Avg is the time to the first tool-related event in the "
+        "response stream, not the raw backend tool execution time."
+    )
+    lines.append("")
+    lines.append("| Strategy | Samples | Tool Avg (ms) | Tool P95 (ms) | Tool P99 (ms) |")
+    lines.append("|----------|:-------:|-------------:|-------------:|-------------:|")
+    for r in results:
+        if "error" in r:
+            continue
+        label = _strategy_label(r.get("strategy", "unknown"))
+        tl = r.get("tool_latency_ms", {})
+        lines.append(
+            f"| {label} "
+            f"| {tl.get('available_samples', 0)} "
+            f"| {tl.get('avg') or '—'} "
+            f"| {tl.get('p95') or '—'} "
+            f"| {tl.get('p99') or '—'} |"
+        )
+    lines.append("")
+
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -335,6 +445,7 @@ def main() -> None:
     parser.add_argument("--warmup-requests", type=int, default=0, help="Warmup requests per strategy (excluded from stats)")
     parser.add_argument("--output-json", type=str, default="", help="Optional path to save result JSON")
     parser.add_argument("--output-html", type=str, default="", help="Optional path to save HTML report")
+    parser.add_argument("--output-md", type=str, default="", help="Optional path to save Markdown report")
     parser.add_argument(
         "--progress",
         action=argparse.BooleanOptionalAction,
@@ -399,6 +510,10 @@ def main() -> None:
     if args.output_html:
         write_html_report(output, args.output_html)
         log_progress(args.progress, f"html saved: {args.output_html}")
+
+    if args.output_md:
+        write_md_report(output, args.output_md)
+        log_progress(args.progress, f"md saved: {args.output_md}")
 
     print(json.dumps(output, indent=2, ensure_ascii=False))
 
