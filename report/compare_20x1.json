@@ -1,0 +1,115 @@
+{
+  "config": {
+    "requests": 20,
+    "concurrency": 1,
+    "timeout_s": 60.0,
+    "warmup_requests": 0,
+    "query": "Latest AI trends",
+    "strategies": [
+      "webiq",
+      "foundry_bing_grounding",
+      "foundry_web_search"
+    ]
+  },
+  "results": [
+    {
+      "summary": {
+        "elapsed_s": 19.5701,
+        "throughput_rps": 1.02,
+        "success": 20,
+        "failure": 0,
+        "success_rate": 100.0
+      },
+      "latency_ms": {
+        "min": 859.26,
+        "avg": 976.16,
+        "p50": 972.42,
+        "p95": 1088.9,
+        "p99": 1112.37,
+        "max": 1118.23
+      },
+      "tool_latency_ms": {
+        "available_samples": 20,
+        "min": 859.26,
+        "avg": 976.16,
+        "p50": 972.42,
+        "p95": 1088.9,
+        "p99": 1112.37,
+        "max": 1118.23,
+        "note": "Proxy metric. For Foundry, this is time-to-first-tool-event in stream, not raw backend tool execution time."
+      },
+      "status_distribution": {
+        "200": 20
+      },
+      "top_errors": [],
+      "strategy": "webiq",
+      "warmup_requests": 0
+    },
+    {
+      "summary": {
+        "elapsed_s": 157.1418,
+        "throughput_rps": 0.13,
+        "success": 20,
+        "failure": 0,
+        "success_rate": 100.0
+      },
+      "latency_ms": {
+        "min": 6369.13,
+        "avg": 7856.7,
+        "p50": 7610.72,
+        "p95": 9541.46,
+        "p99": 9819.35,
+        "max": 9888.83
+      },
+      "tool_latency_ms": {
+        "available_samples": 20,
+        "min": 2475.71,
+        "avg": 3081.57,
+        "p50": 3077.12,
+        "p95": 3530.95,
+        "p99": 4426.97,
+        "max": 4650.97,
+        "note": "Proxy metric. For Foundry, this is time-to-first-tool-event in stream, not raw backend tool execution time."
+      },
+      "status_distribution": {
+        "200": 20
+      },
+      "top_errors": [],
+      "strategy": "foundry_bing_grounding",
+      "warmup_requests": 0
+    },
+    {
+      "summary": {
+        "elapsed_s": 182.0751,
+        "throughput_rps": 0.11,
+        "success": 20,
+        "failure": 0,
+        "success_rate": 100.0
+      },
+      "latency_ms": {
+        "min": 7571.94,
+        "avg": 9103.46,
+        "p50": 8804.19,
+        "p95": 10872.81,
+        "p99": 11003.51,
+        "max": 11036.18
+      },
+      "tool_latency_ms": {
+        "available_samples": 20,
+        "min": 3646.74,
+        "avg": 4823.85,
+        "p50": 4531.29,
+        "p95": 6688.83,
+        "p99": 7170.15,
+        "max": 7290.48,
+        "note": "Proxy metric. For Foundry, this is time-to-first-tool-event in stream, not raw backend tool execution time."
+      },
+      "status_distribution": {
+        "200": 20
+      },
+      "top_errors": [],
+      "strategy": "foundry_web_search",
+      "warmup_requests": 0
+    }
+  ]
+}
