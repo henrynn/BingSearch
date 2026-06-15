@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Performance Compare Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card: #ffffff;
+            --line: #d0d5dd;
+            --text: #1f2937;
+            --muted: #475467;
+        }
+        body { margin: 0; font-family: Segoe UI, Microsoft YaHei, sans-serif; background: var(--bg); color: var(--text); }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .meta { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pill { border: 1px solid #bfd3ff; border-radius: 999px; padding: 4px 10px; background: #ecf3ff; color: #0d47a1; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; }
+        th { background: #fafbfc; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+        .chart { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #fff; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h2 style="margin-top:0">Bing Search Performance Compare</h2>
+            <div class="meta">
+                <span class="pill">requests: 20</span>
+                <span class="pill">concurrency: 1</span>
+                <span class="pill">timeout_s: 60.0</span>
+                <span class="pill">warmup_requests: 0</span>
+            </div>
+            <p style="color:var(--muted)">query: Latest AI trends</p>
+
+        <div class="card">
+            <h3 style="margin-top:0">Background</h3>
+            <p>This benchmark compares three Bing-backed search approaches under the same query and load settings. The goal is to understand the relative performance and behavior of a direct search API path versus two Foundry agent-based search integrations.</p>
+            <p><strong>Web IQ</strong> is Microsoft’s state-of-the-art grounding service for AI agents and assistants. It returns ranked, citation-ready context across web, news, images, video, and more, and it’s built on Bing search infrastructure and re-architected for an era of LLMs and multi-step agents.</p>
+            <p>All runs in this report use the same request count, concurrency, timeout, and no warmup by default, so the results are comparable at the system level.</p>
+            <h3>Key Differences</h3>
+            <ol>
+                <li><strong>Web IQ</strong> is Microsoft’s state-of-the-art grounding service for AI agents and assistants. It returns ranked, citation-ready context across web, news, images, video, and more, and it’s built on Bing search infrastructure and re-architected for an era of LLMs and multi-step agents.</li>
+                <li><strong>Foundry Grounding+Bing</strong> uses a Foundry agent with the Bing grounding tool. It adds agent orchestration and tool invocation on top of search, which makes it more flexible for agent workflows.</li>
+                <li><strong>Foundry Web Search Tool</strong> uses the Foundry web search abstraction inside the agent runtime. It is also agent-based, and it represents the more general web-search integration path in Foundry.</li>
+            </ol>
+        </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0">Metrics</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Success Rate</th>
+                        <th>Throughput</th>
+                        <th>Avg Latency</th>
+                        <th>P95</th>
+                        <th>Tool Avg (proxy)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Web IQ</td><td>100.0%</td><td>1.02</td><td>976.16</td><td>1088.9</td><td>976.16</td></tr><tr><td>Foundry Grounding+Bing</td><td>100.0%</td><td>0.13</td><td>7856.7</td><td>9541.46</td><td>3081.57</td></tr><tr><td>Foundry Web Search Tool</td><td>100.0%</td><td>0.11</td><td>9103.46</td><td>10872.81</td><td>4823.85</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0">Charts</h3>
+            <div class="grid">
+                <div class="chart"><canvas id="c1"></canvas></div>
+                <div class="chart"><canvas id="c2"></canvas></div>
+                <div class="chart"><canvas id="c3"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const labels = ["Web IQ", "Foundry Grounding+Bing", "Foundry Web Search Tool"];
+        const throughput = [1.02, 0.13, 0.11];
+        const avgLatency = [976.16, 7856.7, 9103.46];
+        const p95Latency = [1088.9, 9541.46, 10872.81];
+        const toolAvg = [976.16, 3081.57, 4823.85];
+
+        new Chart(document.getElementById('c1'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Throughput (req/s)', data: throughput }] }
+        });
+
+        new Chart(document.getElementById('c2'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Avg Latency (ms)', data: avgLatency }] }
+        });
+
+        new Chart(document.getElementById('c3'), {
+            type: 'bar',
+            data: { labels, datasets: [
+                { label: 'P95 (ms)', data: p95Latency },
+                { label: 'Tool Avg proxy (ms)', data: toolAvg }
+            ] }
+        });
+    </script>
+</body>
+</html>
