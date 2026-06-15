@@ -1,5 +1,5 @@
 """
-Web IQ strategy – direct API path.
+Web IQ strategy – official Python SDK path.
 
 Web IQ is Microsoft's state-of-the-art grounding service for AI agents and
 assistants.  It returns ranked, citation-ready context across web, news,
@@ -11,7 +11,10 @@ Reference: https://www.microsoft.com/en-us/webiq
 Required environment variables
 --------------------------------
 WEBIQ_API_KEY   – API key for the Web IQ endpoint.
-WEBIQ_URL       – (optional) Override the default endpoint URL.
+
+Dependency
+----------
+    pip install webiq
 
 Usage
 -----
@@ -26,64 +29,73 @@ Usage
 
 import os
 import time
-
-import requests
+from typing import Optional
 
 from strategies.base import RequestResult
 
 
 class WebIQStrategy:
     """
-    Calls the Web IQ search endpoint directly with an API key.
+    Uses the official ``webiq`` SDK to call the Web IQ web search endpoint.
 
-    This is the simplest and typically lowest-latency path because there is
-    no agent orchestration layer – each request goes straight to the search
-    service and returns ranked, citation-ready context.
+    The SDK client is created once in ``setup()`` and reused across all
+    ``invoke()`` calls (connection pooling / keep-alive handled by the SDK).
     """
 
     name = "webiq"
 
     def __init__(self) -> None:
-        self.url = os.getenv("WEBIQ_URL", "https://api.microsoft.ai/v3/search/web")
         api_key = os.getenv("WEBIQ_API_KEY")
         if not api_key:
             raise ValueError("WEBIQ_API_KEY is required for the webiq strategy")
-
-        self.headers = {
-            "host": "api.microsoft.ai",
-            "x-apikey": api_key,
-            "content-type": "application/json",
-        }
+        self._api_key = api_key
+        self._client: Optional[object] = None
 
     def setup(self) -> None:
-        """No-op – no persistent resources needed."""
-        return
+        """Create and open the SDK client (reused across all requests)."""
+        try:
+            from webiq import WebIQClient
+        except ImportError as exc:
+            raise RuntimeError(
+                "Missing dependency. Install: pip install webiq"
+            ) from exc
+        self._client = WebIQClient(api_key=self._api_key)
+        self._client.__enter__()
 
     def invoke(self, query: str, timeout_s: float) -> RequestResult:
-        payload = {
-            "query": query,
-            "maxResults": 10,
-            "language": "en",
-            "region": "US",
-            "contentFormat": "html",
-            "maxLength": 10000,
-        }
+        if self._client is None:
+            return RequestResult(
+                ok=False, status_code=None, latency_ms=0.0, error="Client not initialized"
+            )
+
+        from webiq.types import ContentFormat
+
         t0 = time.perf_counter()
         try:
-            r = requests.post(self.url, headers=self.headers, json=payload, timeout=timeout_s)
+            result = self._client.web.search(
+                query,
+                max_results=10,
+                content_format=ContentFormat.html,
+            )
             latency_ms = (time.perf_counter() - t0) * 1000
+            ok = result is not None
             return RequestResult(
-                ok=200 <= r.status_code < 300,
-                status_code=r.status_code,
+                ok=ok,
+                status_code=200 if ok else None,
                 latency_ms=latency_ms,
-                # For a direct API, total latency equals the tool latency.
+                # For a direct API call, total latency equals the tool latency.
                 tool_latency_ms=latency_ms,
                 tool_latency_source="direct_api_total",
             )
-        except requests.exceptions.RequestException as exc:
+        except Exception as exc:
             latency_ms = (time.perf_counter() - t0) * 1000
             return RequestResult(ok=False, status_code=None, latency_ms=latency_ms, error=str(exc))
 
     def cleanup(self) -> None:
-        """No-op – no persistent resources to release."""
-        return
+        """Close the SDK client and release the underlying connection pool."""
+        if self._client is not None:
+            try:
+                self._client.__exit__(None, None, None)
+            except Exception:
+                pass
+            self._client = None
