@@ -128,30 +128,103 @@ Required pieces depend on the specific API or product surface you are using, but
 - pass the retrieved context into the agent or assistant workflow
 - render citations or ranked context in your application
 
+## Getting Started
+
+### 1. Clone and install dependencies
+
+```bash
+git clone https://github.com/henrynn/BingSearch.git
+cd BingSearch
+pip install -r requirements.txt
+```
+
+### 2. Configure environment variables
+
+Copy the sample file and fill in your values:
+
+```bash
+cp .env.sample .env
+```
+
+| Variable | Required for | Description |
+|----------|-------------|-------------|
+| `WEBIQ_API_KEY` | Web IQ | API key for the Web IQ endpoint |
+| `FOUNDRY_PROJECT_ENDPOINT` | Foundry strategies | Foundry project endpoint URL |
+| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Foundry strategies | Deployed model name |
+| `BING_PROJECT_CONNECTION_NAME` | Foundry Grounding+Bing | Bing grounding connection name |
+
+### 3. Authenticate with Azure (Foundry strategies only)
+
+```bash
+az login
+```
+
+### 4. Run the benchmark
+
+Run all three strategies and generate JSON, HTML, and Markdown reports:
+
+```bash
+python compare_perf.py \
+  --requests 20 --concurrency 1 --timeout 60 \
+  --strategies webiq,foundry_bing_grounding,foundry_web_search \
+  --output-json report/compare_20x1.json \
+  --output-html report/perf_report_2026-06-15.html \
+  --output-md   report/compare_20x1.md
+```
+
+Run Web IQ only (no Azure login needed):
+
+```bash
+python compare_perf.py \
+  --requests 20 --concurrency 1 --timeout 20 \
+  --strategies webiq \
+  --output-json report/compare_20x1.json
+```
+
+**Key parameters:**
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--requests` | Total request count per strategy | 20 |
+| `--concurrency` | Concurrent worker threads | 1 |
+| `--timeout` | Per-request timeout in seconds | 30 |
+| `--warmup-requests` | Warmup requests excluded from stats | 0 |
+| `--strategies` | Comma-separated list of strategies to run | all three |
+| `--output-json` | Save result data as JSON | — |
+| `--output-html` | Save interactive HTML report | — |
+| `--output-md` | Save Markdown report (GitHub-friendly) | — |
+
+> **Note:** Foundry strategies take 6–10 seconds per request. A 20-request run takes approximately 2–3 minutes. Live progress is printed to stderr.
+
+### 5. View the report
+
+- **HTML dashboard** (with charts): open `report/perf_report_2026-06-15.html` in a browser
+- **Markdown report** (GitHub-rendered): view `report/compare_20x1.md` on GitHub
+- **Raw data**: `report/compare_20x1.json`
+
 ## Performance Report
 
-This repository includes a comparison report generated from the benchmark script.
+The latest benchmark results are available in the [report](report) folder:
 
-- Metrics data: [report/compare_20x1.json](report/compare_20x1.json)
-- Report dashboard: [report/perf_report_2026-06-15.html](report/perf_report_2026-06-15.html)
+| File | Format | Description |
+|------|--------|-------------|
+| [report/compare_20x1.md](report/compare_20x1.md) | Markdown | GitHub-rendered results with tables |
+| [report/perf_report_2026-06-15.html](report/perf_report_2026-06-15.html) | HTML | Interactive charts dashboard |
+| [report/compare_20x1.json](report/compare_20x1.json) | JSON | Raw benchmark data |
 
-The report is set up to compare:
+## Repository Structure
 
-- Web IQ
-- Grounding with Bing Search
-- Web Search Tool
-
-## Repository Files
-
-- [compare_perf.py](compare_perf.py): benchmark runner and report generator
-- [perf_test.py](perf_test.py): direct Web IQ benchmark script
-- [diagnose_foundry.py](diagnose_foundry.py): Foundry connectivity and search diagnostics
-- [report](report): generated benchmark outputs
-
-## Notes on the Web IQ Performance Image
-
-If you have a separate Web IQ performance image, place it in the report folder and reference it here. This README intentionally avoids naming a missing image file so the repository stays valid as-is.
-
-## Suggested Next Step
-
-Run the benchmark, then open the HTML dashboard in the report folder and compare total latency, throughput, and the tool-latency proxy side by side.
+```
+BingSearch/
+├── compare_perf.py              # Benchmark runner and report generator
+├── perf_test.py                 # Standalone Web IQ benchmark
+├── diagnose_foundry.py          # Foundry connectivity diagnostics
+├── requirements.txt
+├── .env.sample                  # Environment variable template
+├── strategies/
+│   ├── base.py                  # Shared types and Foundry base class
+│   ├── webiq.py                 # Web IQ (official SDK)
+│   ├── foundry_bing_grounding.py  # Foundry + Grounding with Bing Search
+│   └── foundry_web_search.py    # Foundry + Web Search Tool
+└── report/                      # Generated benchmark outputs
+```
