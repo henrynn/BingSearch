@@ -189,6 +189,20 @@ def write_html_report(output: Dict[str, Any], html_path: str) -> None:
     p95_latency = [r.get("latency_ms", {}).get("p95", 0) for r in chart_rows]
     tool_avg = [r.get("tool_latency_ms", {}).get("avg") for r in chart_rows]
 
+    tool_rows_html = "".join(
+        (
+            "<tr>"
+            f'<td>{_strategy_label(r.get("strategy", "unknown"))}</td>'
+            f'<td style="text-align:center">{r.get("tool_latency_ms", {}).get("available_samples", 0)}</td>'
+            f'<td style="text-align:right">{r.get("tool_latency_ms", {}).get("avg") or "—"}</td>'
+            f'<td style="text-align:right">{r.get("tool_latency_ms", {}).get("p95") or "—"}</td>'
+            f'<td style="text-align:right">{r.get("tool_latency_ms", {}).get("p99") or "—"}</td>'
+            "</tr>"
+        )
+        for r in results
+        if isinstance(r, dict) and "error" not in r
+    )
+
     rows_html = "".join(
         (
             "<tr>"
@@ -197,7 +211,7 @@ def write_html_report(output: Dict[str, Any], html_path: str) -> None:
             f'<td>{r.get("summary", {}).get("throughput_rps", 0)}</td>'
             f'<td>{r.get("latency_ms", {}).get("avg", 0)}</td>'
             f'<td>{r.get("latency_ms", {}).get("p95", 0)}</td>'
-            f'<td>{r.get("tool_latency_ms", {}).get("avg")}</td>'
+            f'<td>{r.get("latency_ms", {}).get("p99", 0)}</td>'
             "</tr>"
             if "error" not in r
             else (
@@ -262,12 +276,29 @@ def write_html_report(output: Dict[str, Any], html_path: str) -> None:
         </div>
 
         <div class="card">
+            <h3 style="margin-top:0">Tool Latency (proxy)</h3>
+            <p style="color:var(--muted);font-size:13px;margin-top:0">For Foundry strategies, Tool Avg is the time to the first tool-related event in the response stream, not the raw backend tool execution time.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th style="text-align:center">Samples</th>
+                        <th style="text-align:right">Tool Avg (ms)</th>
+                        <th style="text-align:right">Tool P95 (ms)</th>
+                        <th style="text-align:right">Tool P99 (ms)</th>
+                    </tr>
+                </thead>
+                <tbody>{tool_rows_html}</tbody>
+            </table>
+        </div>
+
+        <div class="card">
             <h3 style="margin-top:0">Metrics</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Strategy</th><th>Success Rate</th><th>Throughput (req/s)</th>
-                        <th>Avg Latency (ms)</th><th>P95 (ms)</th><th>Tool Avg proxy (ms)</th>
+                        <th>Avg Latency (ms)</th><th>P95 (ms)</th><th>P99 (ms)</th>
                     </tr>
                 </thead>
                 <tbody>{rows_html}</tbody>
