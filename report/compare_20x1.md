@@ -20,9 +20,9 @@ This benchmark compares three Bing-backed search approaches under the same query
 
 - **Date**: 2026-06-15
 - **Query**: `Latest AI trends` 
-- **Requests per strategy**: 1
+- **Requests per strategy**: 20
 - **Concurrency**: 1
-- **Timeout**: 20.0s
+- **Timeout**: 60.0s
 - **Warmup requests**: 0
 
 ## Results
@@ -31,7 +31,9 @@ This benchmark compares three Bing-backed search approaches under the same query
 
 | Strategy | Success Rate | Throughput (req/s) | Avg (ms) | P50 (ms) | P95 (ms) | P99 (ms) | Max (ms) |
 |----------|:-----------:|:-----------------:|--------:|--------:|--------:|--------:|--------:|
-| Web IQ | 100.0% | 0.98 | 1019.87 | 1019.87 | 1019.87 | 1019.87 | 1019.87 |
+| Web IQ | 100.0% | 4.65 | 214.83 | 187.19 | 254.34 | 609.16 | 697.86 |
+| Foundry Grounding+Bing | 100.0% | 0.12 | 8509.33 | 8293.64 | 10223.87 | 10255.19 | 10263.02 |
+| Foundry Web Search Tool | 100.0% | 0.1 | 10120.64 | 9858.56 | 12051.95 | 12478.48 | 12585.12 |
 
 ### Tool Latency (proxy)
 
@@ -39,5 +41,7 @@ This benchmark compares three Bing-backed search approaches under the same query
 
 | Strategy | Samples | Tool Avg (ms) | Tool P95 (ms) | Tool P99 (ms) |
 |----------|:-------:|-------------:|-------------:|-------------:|
-| Web IQ | 1 | 1019.87 | 1019.87 | 1019.87 |
+| Web IQ | 20 | 214.83 | 254.34 | 609.16 |
+| Foundry Grounding+Bing | 20 | 3012.14 | 3960.76 | 4070.75 |
+| Foundry Web Search Tool | 20 | 5227.01 | 7343.07 | 7379.65 |
 
